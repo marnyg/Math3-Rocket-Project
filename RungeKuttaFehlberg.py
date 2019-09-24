@@ -36,7 +36,10 @@ class RungeKuttaFehlberg54:
         s=np.zeros((6,self.dim))
         for i in range(0,6):
             s[i,:]=self.F(Win+self.h*self.A[i,0:i].dot(s[0:i,:]))
-        print(Win+self.h*self.A[i,0:i].dot(s[0:i,:]))
+        #print(Win+self.h*self.A[i,0:i].dot(s[0:i,:]))
+        print(self.B[1,])
+        print(self.B[1,])
+        print(self.B[1,:])
 
         Zout=Win+self.h*(self.B[0,:].dot(s));
         Wout=Win+self.h*(self.B[1,:].dot(s));
