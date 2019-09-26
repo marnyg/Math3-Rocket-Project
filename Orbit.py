@@ -7,6 +7,7 @@ import scipy.integrate as integrate
 
 import matplotlib.pyplot as plot
 import matplotlib.animation as animation
+import RungeKuttaFehlberg as RFK
 
 class Orbit:
     """
@@ -19,14 +20,19 @@ class Orbit:
     and t0 is the initial time
     """
     def __init__(self,
-                 init_state = [0, 0, 1, 2, 0],
+                 init_state = [0, 0, 1, 1, 0],
+                 h=1./30,
                  G=1,
-                 m1=13,
-                 m2=3): 
+                 m1=1,
+                 m2=3,
+                 simSpeed=5e-5):
+        print(m2)
         self.GravConst = G
-        self.mPlanet = m1
-        self.mSol = m2
+        self.mMane = m1
+        self.mJord = m2
         self.state = np.asarray(init_state, dtype='float')
+        self.rfk= RFK.RungeKuttaFehlberg54(self.ydot,5,h,simSpeed)
+
     
     def position(self):
         """compute the current x,y positions of the pendulum arms"""
@@ -39,8 +45,8 @@ class Orbit:
         y = self.state[3]
         vx = self.state[2]
         vy = self.state[4]
-        m1 = self.mPlanet
-        m2 = self.mSol
+        m1 = self.mMane
+        m2 = self.mJord
         G = self.GravConst
         U=-G*m1*m2/sqrt(x**2+y**2)
         K= m1*(vx**2+vy**2)/2
@@ -50,15 +56,12 @@ class Orbit:
         return self.state[0]
 
     def step(self, h):
-        """Uses the trapes method to calculate the new state after h seconds."""
         x=self.state
-        s1=self.ydot(x)
-        s2=self.ydot(x+h*s1)
-        self.state=x+h*(s1+s2)/2
+        self.state,E=self.rfk.safeStep(x)
     
     def ydot(self,x):
         G=self.GravConst
-        m2=self.mSol
+        m2=self.mJord
         Gm2=G*m2;
         
         px2=0;py2=0;
@@ -72,39 +75,63 @@ class Orbit:
         z[4]=(Gm2*(py2-py1))/(dist**3)
         return z
 
+class Moon:
+    mass=7.3477e22
+    velocity=[1020*10000000,0]#[x,y] the x component here is waaaay wrong, had to multiply it with 10000000 to get an orbit
+    position=[0,405510]#[x,y]
+    def getAsArray(): return [Moon.position[0],Moon.velocity[0],Moon.position[1],Moon.velocity[1]]
 
+class Earth:
+    mass=5.9736e24
 
 # make an Orbit instance
-orbit = Orbit([0.0,0.0, 1.0, 1.0, 1.0])
-dt = 1./30 # 30 frames per second
+dt = 1./30# 30 frames per second
+simulationSpeed=5e-8
+startTime=[0]
+
+orbit = Orbit(
+    np.concatenate([startTime,Moon.getAsArray()]),
+    dt ,
+    9.81,
+    Moon.mass,
+    Earth.mass,
+    simulationSpeed)
 
 # The figure is set
 fig = plot.figure()
-axes = fig.add_subplot(111, aspect='equal', autoscale_on=False,
-                     xlim=(-3, 3), ylim=(-3, 3))
+circle1 = plot.Circle((0, 0), 12756, color='g')
+axes = fig.add_subplot(111, aspect='equal', autoscale_on=True,
+                     xlim=(-5e5, 5e5), ylim=(-5e5,5e5))
 
-line1, = axes.plot([], [], 'o-g', lw=2) # A green planet
-line2, = axes.plot([], [], 'o-y', lw=2) # A yellow sun
+line1, = axes.plot([], [], 'o-b', lw=2) # A green planet
+#line2, = axes.plot([], [], 'o-y', lw=2) # A yellow sun
+axes.add_artist(circle1)
 time_text = axes.text(0.02, 0.95, '', transform=axes.transAxes)
 energy_text = axes.text(0.02, 0.90, '', transform=axes.transAxes)
+position_text = axes.text(0.02, 0.85, '', transform=axes.transAxes)
+velocity_text= axes.text(0.02, 0.80, '', transform=axes.transAxes)
 
 def init():
     """initialize animation"""
     line1.set_data([], [])
-    line2.set_data([], [])
+#    line2.set_data([], [])
     time_text.set_text('')
     energy_text.set_text('')
-    return line1, line2, time_text, energy_text
+    position_text.set_text('')
+    velocity_text.set_text('')
+    return line1, time_text, energy_text
 
 def animate(i):
     """perform animation step"""
     global orbit, dt
-    orbit.step(dt)
+    orbit.step(dt*100)
     line1.set_data(*orbit.position())
-    line2.set_data([0.0,0.0])
+#    line2.set_data([0.0,0.0])
     time_text.set_text('time = %.1f' % orbit.time_elapsed())
     energy_text.set_text('energy = %.3f J' % orbit.energy())
-    return line1,line2, time_text, energy_text
+    position_text.set_text('position = %.3f x %.3f y' % (orbit.position()))
+    velocity_text.set_text('velocity = %.3f x %.3f y' % (orbit.state[2],orbit.state[4]))
+    return line1, time_text, energy_text, position_text, velocity_text
 
 # choose the interval based on dt and the time to animate one step
 # Take the time for one call of the animate.
@@ -128,6 +155,6 @@ anim=animation.FuncAnimation(fig,        # figure to plot in
 # the video can be embedded in html5.  You may need to adjust this for
 # your system: for more information, see
 # http://matplotlib.sourceforge.net/api/animation_api.html
-anim.save('orbit.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+#anim.save('orbit.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 
 plot.show()

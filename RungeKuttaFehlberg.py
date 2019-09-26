@@ -34,12 +34,9 @@ class RungeKuttaFehlberg54:
     def step(self,
              Win):
         s=np.zeros((6,self.dim))
+        #print(s)
         for i in range(0,6):
             s[i,:]=self.F(Win+self.h*self.A[i,0:i].dot(s[0:i,:]))
-        #print(Win+self.h*self.A[i,0:i].dot(s[0:i,:]))
-        print(self.B[1,])
-        print(self.B[1,])
-        print(self.B[1,:])
 
         Zout=Win+self.h*(self.B[0,:].dot(s));
         Wout=Win+self.h*(self.B[1,:].dot(s));
@@ -81,28 +78,3 @@ class RungeKuttaFehlberg54:
         self.h=self.h/2;
     def setStepLength(self,stepLength):
         self.h=stepLength;
-def F(Y):
-    M=np.array([[0.49119653, 0.32513304, 0.98057799],
-                [0.20768544, 0.97699416, 0.18220559],
-                [0.96407071, 0.18373237, 0.95307793]]);
-    res=np.ones(4); 
-    print(Y[1:4])
-    res[1:4]=M.dot(Y[1:4]);
-    return res;
-
-def main():
-    W  =np.array([0,1,1,1]);
-    h=0.1;
-    tol=05e-14;
-    tEnd=2.0;
-    rkf54 = RungeKuttaFehlberg54(F,4,h,tol)
-
-    while(W[0]<tEnd):
-        W , E = rkf54.safeStep(W);
-    rkf54.setStepLength(tEnd-W[0]);
-    W,E = rkf54.step(W);
-
-    print(W,E);
-if __name__ == "__main__":
-    # execute only if run as a script
-    main()
