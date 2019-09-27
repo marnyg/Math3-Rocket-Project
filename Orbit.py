@@ -1,4 +1,4 @@
-
+#! /bin/python3.7
 from numpy import sqrt
 import time
 
@@ -77,7 +77,7 @@ class Orbit:
 
 class Moon:
     mass=7.3477e22
-    velocity=[1020*10000000,0]#[x,y] the x component here is waaaay wrong, had to multiply it with 10000000 to get an orbit
+    velocity=[1020*30,0]#[x,y] the x component here is waaaay wrong, had to multiply it with 30 to get an orbit
     position=[0,405510]#[x,y]
     def getAsArray(): return [Moon.position[0],Moon.velocity[0],Moon.position[1],Moon.velocity[1]]
 
@@ -86,13 +86,14 @@ class Earth:
 
 # make an Orbit instance
 dt = 1./30# 30 frames per second
-simulationSpeed=5e-8
+simulationSpeed=5e-9
+bigG=6.67e-11
 startTime=[0]
 
 orbit = Orbit(
     np.concatenate([startTime,Moon.getAsArray()]),
     dt ,
-    9.81,
+    bigG,
     Moon.mass,
     Earth.mass,
     simulationSpeed)
@@ -100,7 +101,7 @@ orbit = Orbit(
 # The figure is set
 fig = plot.figure()
 circle1 = plot.Circle((0, 0), 12756, color='g')
-axes = fig.add_subplot(111, aspect='equal', autoscale_on=True,
+axes = fig.add_subplot(111, aspect='equal', autoscale_on=False,
                      xlim=(-5e5, 5e5), ylim=(-5e5,5e5))
 
 line1, = axes.plot([], [], 'o-b', lw=2) # A green planet
