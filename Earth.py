@@ -20,7 +20,7 @@ class Earth:
             #return object_mass * 9.81
 
     def atmosphere_density(self, altitude):
-        return ( self.__pressure__(altitude) / self.__airtemp__(altitude) ) * 3.4855
+        return ( self.__pressure__(altitude) / self.__airtemp__(altitude) ) * 3.4855 / 1000
         
     def __airtemp__(self, altitude): # returns air temperature (in kelvin) at altitude (in meters) 
         if altitude <= self.troposphere[1]:

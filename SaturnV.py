@@ -45,7 +45,7 @@ class SaturnV:
             #print('stage 3, time: ' + str(time) + " force: ", self.stage_3_force)
             return self.stage_3_force
         else: 
-            print('No more fuel at time=', time)
+            #print('No more fuel at time=', time)
             return 0 # no more fuel
 
     def exaust_gass_velocity(self, time):
@@ -82,7 +82,7 @@ class SaturnV:
             #print('stage 3, time: ' + str(time) + " mass: ", total_current_mass)
             return total_current_mass    
         else: 
-            print('All stages dropped, current mass is only of module')
+            #print('All stages dropped, current mass is only of module')
             return self.module_empty_mass # all stages have been decoupled, only the mass of the landing module remains
             # should we use module_loaded_mass or the empty mass here?
     
@@ -92,11 +92,11 @@ class SaturnV:
     def current_drag(self, planet, time, altitude, velocity):
         density_atmosphere = planet.atmosphere_density(altitude)
         drag = 1/2 * self.drag_coefficient * density_atmosphere * self.current_crossection(time) * velocity**2 
-        if drag <= 0:
-            print('No drag at time: ', time, ' Altitude:', altitude, ' Velocity:', velocity)
         return drag
 
     def current_crossection(self, time):
+        return 10.1 * math.pi
+        '''
         if time < self.total_firing_time:
             if time <= self.stage_1_firing_time:
                 # stage 1 is firing
@@ -109,12 +109,13 @@ class SaturnV:
                 return 6.6 * math.pi
         else: 
             return 6.6 * math.pi
+        '''
 
     def total_working_force(self, time, planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel):
         upwards = self.current_force(time)
 
         distance_to_surface = planet.distance_from_center(previous_xpos, previous_ypos) - planet.equator_radius
-        distance_to_center = math.sqrt(previous_xpos**2 + previous_ypos**2)
+        distance_to_center = planet.distance_from_center(previous_xpos, previous_ypos) #math.sqrt(previous_xpos**2 + previous_ypos**2)
         # How big is the gravitational force?
         gravity = planet.gravitational_force(self.current_mass(time), distance_to_center)
         # We know gravity allways points towards the earth, earth is at (0, 0)
@@ -124,10 +125,10 @@ class SaturnV:
         
         angle_to_origin = None # radians
         if previous_xpos == 0:
-            angle_to_origin =  math.pi / 2
+            angle_to_origin =  3 * math.pi / 2
         else: 
             angle_to_origin = math.atan(previous_ypos / previous_xpos)
-        
+               
         gravx = gravity * math.cos(angle_to_origin)
         gravy = gravity * math.sin(angle_to_origin)
 
@@ -140,17 +141,28 @@ class SaturnV:
         
         velocity_angle = None
         if previous_xvel == 0:
-            velocity_angle =  math.pi / 2
+            #print('xvel is 0')
+            velocity_angle =  3 * math.pi / 2
         else: 
             velocity_angle = math.atan2(previous_yvel, previous_xvel)
 
+        #print('velangle', velocity_angle)
         dragx = drag * math.cos(velocity_angle)
         dragy = drag * math.sin(velocity_angle)
 
-        if math.sin(velocity_angle) != 1:
+
+        '''
+        if math.sin(velocity_angle) == 1:
             print('rocket going down!')
         #forcex = 0 + dragx + gravx
+        '''
+        if dragy > 0:
+            print('Drag is pointing upwards?!?!')
+        if gravy > 0:
+            print('Gravity is pointing upwards?!?!')
+
+        
         forcex = 0
-        forcey = upwards - dragy + gravy
+        forcey = upwards - abs(drag) - abs(gravy)
         
         return (forcex, forcey), (dragx, dragy), (gravx, gravy)

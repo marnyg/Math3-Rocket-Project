@@ -12,21 +12,38 @@ state = RocketState(rocket, earth, starting_state, stepsize=1)
 
 
 num_iterations =  (rocket.stage_1_firing_time + rocket.stage_2_firing_time + rocket.stage_3_firing_time)
-print(rocket.total_firing_time)
+print('Gravity at time 0:', earth.gravitational_force(rocket.current_mass(0), earth.equator_radius))
+
+'''
+xs = [i for i in range(0, 50000)]
+
+pressures = [earth.__pressure__(i) for i in xs]
+temperatures = [earth.__airtemp__(i) for i in xs]
+densities = [earth.atmosphere_density(i) for i in xs]
+
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+ax1.set_title('Pressures')
+ax1.plot(xs, pressures)
+ax2.set_title('Temps')
+ax2.plot(xs, temperatures)
+ax3.set_title('Density')
+ax3.plot(xs, densities)
+plt.show()
 
 seconds = 11 * 60
+'''
+state.rk45(05e-4, num_iterations + 100)
 
-for i in range(num_iterations):
-    state.rk45(tolerance=05e-14)
-
-xs = [x for x in range(num_iterations + 1)]
+#xs = [x for x in range(num_iterations + 1)]
+xs = state.time_increments
+print('End time:', xs[-1])
 
 altitude = [(x - earth.equator_radius) for x in [y[1] for y in  state.current_state]] # only altitudes
 speed = [x for x in [y[3] for y in state.current_state]]
 drags = [x for x in [y[1] for y in state.drags]]
 gravs = [x for x in [y[1] for y in state.gravities]]
 forcesy = [x for x in [y[1] for y in state.forces]]
-thrusts = [x for x in [rocket.current_force(y) for y in xs]]
+thrusts = [rocket.current_force(y) for y in xs]
 
 stage_1_end = rocket.stage_1_firing_time
 stage_2_end = rocket.stage_1_firing_time + rocket.stage_2_firing_time
@@ -84,7 +101,7 @@ def plots():
     ax7.set_title('Sum of forces on rocket')
     ax7.plot(xs, forcesy)
     
-
+    #points(ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9)
     #plt.axvline(x=rocket.stage_1_firing_time)
     #plt.axvline(x=(rocket.stage_1_firing_time + rocket.stage_2_firing_time))
     #plt.axvline(x=(rocket.stage_1_firing_time + rocket.stage_2_firing_time + rocket.stage_3_firing_time))
@@ -95,30 +112,37 @@ def movie(xs, altitude):
     fig = plt.figure()
     ax = plt.axes(xlim=(-max(altitude), max(altitude)), ylim=(-2, max(altitude)))
     line, = ax.plot([], [], 'o-y', lw=2)
+    line2, = ax.plot([], [], '_-b', lw=2)
+    line3, = ax.plot([], [], '_-b', lw=2)
 
     # initialization function: plot the background of each frame
     def init():
         line.set_data([], [])
-        return line,
+        line2.set_data([], [])
+        line3.set_data([], [])
+        return line, line2, line3
 
     # animation function.  This is called sequentially
     def animate(i):
+        print('frame:', i, 'altitude:', altitude[i])
         x = xs[i]
         y = altitude[i]
         line.set_data(x, y)
-        return line,
+        line2.set_data(0, earth.troposphere[1])
+        line3.set_data(0, earth.lower_stratosphere[1])
+        return line, line2, line3
 
 
-    normal_speed = 1000 # ms delay between frames
+    normal_speed = 10 # ms delay between frames
     double_speed = normal_speed / 2
     quad_speed = normal_speed / 4
     octa_speed = normal_speed / 8
 
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=num_iterations, interval=octa_speed, blit=True)
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=len(altitude), interval=1, blit=True)
     plt.show()
 
 plots()
-
+#movie(xs, altitude)
 
 #for i in range(rocket.total_firing_time):
     #print(rocket.current_force(i))
