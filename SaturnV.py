@@ -95,8 +95,6 @@ class SaturnV:
         return drag
 
     def current_crossection(self, time):
-        return 10.1 * math.pi
-        '''
         if time < self.total_firing_time:
             if time <= self.stage_1_firing_time:
                 # stage 1 is firing
@@ -109,10 +107,25 @@ class SaturnV:
                 return 6.6 * math.pi
         else: 
             return 6.6 * math.pi
-        '''
+
+    def current_angle_to_origin(self,previous_xpos,previous_ypos):
+        if previous_xpos == 0:
+            return  3 * math.pi / 2
+        else: 
+            return  math.atan(previous_ypos / previous_xpos)
+
+    def current_velocity_angle(self,previous_xvel, previous_yvel):
+        if previous_xvel == 0:
+            return 3 * math.pi / 2
+        else: 
+            return math.atan2(previous_yvel, previous_xvel)
+
+    def decomposeVector(self, vector, angle):
+        x = vector * math.cos(angle)
+        y = vector * math.sin(angle)
+        return x,y
 
     def total_working_force(self, time, planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel):
-        upwards = self.current_force(time)
 
         distance_to_surface = planet.distance_from_center(previous_xpos, previous_ypos) - planet.equator_radius
         distance_to_center = planet.distance_from_center(previous_xpos, previous_ypos) #math.sqrt(previous_xpos**2 + previous_ypos**2)
@@ -123,39 +136,19 @@ class SaturnV:
         # Gx = G cos(angle to origin), Gy = G sin(angle to origin) 
         # Angle to origin = atan(y/x) = atan (previous_ypos/ previous_xpos)
         
-        angle_to_origin = None # radians
-        if previous_xpos == 0:
-            angle_to_origin =  3 * math.pi / 2
-        else: 
-            angle_to_origin = math.atan(previous_ypos / previous_xpos)
-               
-        gravx = gravity * math.cos(angle_to_origin)
-        gravy = gravity * math.sin(angle_to_origin)
+        velocity_angle = self.current_velocity_angle(previous_xvel,previous_yvel)
+        angle_to_origin = self.current_angle_to_origin(previous_xpos, previous_ypos)
 
-        #gravx = planet.gravitational_force(self.current_mass(time), previous_xpos)
-        #gravy = planet.gravitational_force(self.current_mass(time), previous_ypos)
+        upwards = self.current_force(time)
+        gravx, gravy = self.decomposeVector(gravity,angle_to_origin)
 
         velocity = math.sqrt(previous_xvel**2 + previous_yvel**2)
-
         drag = self.current_drag(planet, time, distance_to_surface, velocity)
-        
-        velocity_angle = None
-        if previous_xvel == 0:
-            #print('xvel is 0')
-            velocity_angle =  3 * math.pi / 2
-        else: 
-            velocity_angle = math.atan2(previous_yvel, previous_xvel)
-
-        #print('velangle', velocity_angle)
-        dragx = drag * math.cos(velocity_angle)
-        dragy = drag * math.sin(velocity_angle)
+        dragx, dragy = self.decomposeVector(drag, velocity_angle)
 
 
-        '''
         if math.sin(velocity_angle) == 1:
             print('rocket going down!')
-        #forcex = 0 + dragx + gravx
-        '''
         if dragy > 0:
             print('Drag is pointing upwards?!?!')
         if gravy > 0:
