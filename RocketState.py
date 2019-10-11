@@ -20,8 +20,11 @@ class RocketState:
         self.yvel_current = yvel_start
         self.time = 0
         self.start_state = [xpos_start, ypos_start, xvel_start, yvel_start]
+        self.mystart_state = [1,xpos_start, ypos_start, xvel_start, yvel_start]
 
         self.current_state = [[xpos_start, ypos_start, xvel_start, yvel_start]]
+        self.mycurrent_state = self.mystart_state
+        self.stateLog=[self.mystart_state]
         self.time_increments = [0]
         self.forces = [(0, 0)]
         self.masses = [rocket.total_loaded_mass]
@@ -34,6 +37,7 @@ class RocketState:
         self.rocket = rocket
         self.stepsize = stepsize
 
+
     def delta_state(self, time, current_state): # Returns change in time from last step, and change in position and velocity with this timestep [x, y, xvel, yvel]
         previous_xpos, previous_ypos, previous_xvel, previous_yvel = current_state # last element in list
         
@@ -41,34 +45,53 @@ class RocketState:
         
         # How far does time jump at each step
         time_increment = time - prevous_time_value
-
-        # The next (x, y) will be (current_x, current_y) + (current_xvel, current_yvel)
-        delta_xpos = previous_xvel
-        delta_ypos = previous_yvel
         
         # Find the sum of all forces working on the rocket at this time
         (working_force), (drag_force), (grav_force) = self.rocket.total_working_force(time, self.planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel)
-        '''
-        self.forces.append(working_force)
-        self.masses.append(self.rocket.current_mass(time))
-        self.drags.append(drag_force)
-        self.gravities.append(grav_force)
-        '''
-        # The next velocity (next_xvel, next_yvel) will be 
-        # the force currently acting on the rocket, divided by the current mass of the rocket
-        # Both values are dependant on the time
-        # V = dist/time, V' = V/time = acceleration (a), F = ma -> a = F / m
+
+        
         current_mass = self.rocket.current_mass(time)
         
         delta_xvel = working_force[0] / current_mass
         delta_yvel = working_force[1] / current_mass
 
-        #print("Working force at time " + str(time) + " is: ", working_force)
-        #print("Mass at time " + str(time) + " is: ", self.rocket.current_mass(time))
-        #return time_increment, [delta_xpos, delta_ypos, delta_xvel, delta_yvel]
+        newState=[previous_xvel,previous_yvel,delta_xvel,delta_yvel]
 
-        # F(time, )
-        return time_increment, [delta_xpos, delta_ypos, delta_xvel, delta_yvel]
+        return time_increment, newState
+
+    def loggState(self,working_force,time,drag_force,grav_force,next_state):
+        self.forces.append(working_force)
+        self.masses.append(self.rocket.current_mass(time))
+        self.drags.append(drag_force)
+        self.gravities.append(grav_force)
+        self.thrusts.append(self.rocket.current_force(time))
+        self.stateLog.append(next_state)
+
+
+
+    def mar_delta_state(self, current_state): # Returns change in time from last step, and change in position and velocity with this timestep [x, y, xvel, yvel]
+        time, previous_xpos, previous_ypos, previous_xvel, previous_yvel = current_state # last element in list
+        # Find the sum of all forces working on the rocket at this time
+        (working_force), (drag_force), (grav_force) = self.rocket.total_working_force(time, self.planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel)
+
+        
+        current_mass = self.rocket.current_mass(time)
+        
+        delta_xvel = working_force[0] / current_mass
+        delta_yvel = working_force[1] / current_mass
+
+        delta_state=[1,previous_xvel,previous_yvel,delta_xvel,delta_yvel]
+        next_state= current_state+delta_state
+
+        self.loggState(working_force,time,drag_force,grav_force,next_state)
+
+        return delta_state
+
+
+
+
+
+
 
     def increment(self, end_time):    
         if len(self.time_increments) == 0:
@@ -219,7 +242,6 @@ class RocketState:
                     #print('Could not find applicable stepsize, exiting...')
                     #sys.exit(-1) # Exit with error, could not get an accurate enough stepsize. Impossible to find solution numerically?
             
-                
             (working_force), (drag_force), (grav_force) = self.rocket.total_working_force(self.time_increments[-1], self.planet, next_state[0], next_state[2], next_state[1], next_state[3])
             #print('next_time:', self.time_increments[-1] + self.stepsize)
             

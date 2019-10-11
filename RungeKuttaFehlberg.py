@@ -34,7 +34,6 @@ class RungeKuttaFehlberg54:
     def step(self,
              Win):
         s=np.zeros((6,self.dim))
-        #print(s)
         for i in range(0,6):
             s[i,:]=self.F(Win+self.h*self.A[i,0:i].dot(s[0:i,:]))
 
