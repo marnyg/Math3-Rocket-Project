@@ -18,7 +18,7 @@ state = RocketState(rocket, earth, starting_state, stepsize=1)
 def doRungeKuttaRivertz():
     dimension = 5
     h = 1 / 4
-    tol = 5e-10
+    tol = 5e-20
     tEnd = 1000
     function=state.mar_delta_state
 
@@ -48,7 +48,7 @@ def doPlots(data=False,animation=False,vectors=False):
     thrusts = [rocket.current_force(y) for y in xs]
 
 
-    if not data:
+    if data:
         ploter.plots([(xs, thrusts,"Thrust"),(xs, dragx,"Drag x"), (xs, dragy,"Drag y"), (xs, gravx,"Grav x"),(xs, gravy,"Grav y"), (xs, yvel,"yvel"),(xs, xvel,"xvel"),(xs, ypos,"ypos"), (xs, xpos,"xpos"), (xs, state.masses,"Mass")], rocket)
     if animation:
         ploter.movie(xs,earth,xpos,ypos)
