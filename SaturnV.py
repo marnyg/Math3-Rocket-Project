@@ -121,8 +121,8 @@ class SaturnV:
             return math.atan2(previous_yvel, previous_xvel)
 
     def decomposeVector(self, vector, angle):
-        x = vector * math.cos(angle)
-        y = vector * math.sin(angle)
+        x = vector * math.sin(angle)
+        y = vector * math.cos(angle)
         return x,y
 
     def total_working_force(self, time, planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel):
@@ -135,27 +135,37 @@ class SaturnV:
         # We know our position (x, y) relative to the earth
         # Gx = G cos(angle to origin), Gy = G sin(angle to origin) 
         # Angle to origin = atan(y/x) = atan (previous_ypos/ previous_xpos)
+
+        thrustForce = self.current_force(time)
+        
+        angle_to_origin = self.current_angle_to_origin(previous_xpos, previous_ypos)
+        gravAngle=angle_to_origin+math.pi
+        gravx, gravy = self.decomposeVector(gravity, gravAngle)
+
+        
         
         velocity_angle = self.current_velocity_angle(previous_xvel,previous_yvel)
-        angle_to_origin = self.current_angle_to_origin(previous_xpos, previous_ypos)
-
-        upwards = self.current_force(time)
-        gravx, gravy = self.decomposeVector(gravity,angle_to_origin)
-
+        velAngleOffset=0
         velocity = math.sqrt(previous_xvel**2 + previous_yvel**2)
+        velx,vely=self.decomposeVector(velocity, velocity_angle)
+
+        dragAngle=velocity_angle+math.pi
         drag = self.current_drag(planet, time, distance_to_surface, velocity)
-        dragx, dragy = self.decomposeVector(drag, velocity_angle)
+        dragx, dragy = self.decomposeVector(drag, dragAngle)
+
+
+        thrustForcex,thrustForcey=self.decomposeVector(thrustForce,velocity_angle)
 
 
         if math.sin(velocity_angle) == 1:
             print('rocket going down!')
         if dragy > 0:
-            print('Drag is pointing upwards?!?!')
+            print(time,'Drag is pointing upwards?!?!')
         if gravy > 0:
             print('Gravity is pointing upwards?!?!')
 
+       
+        forcex = thrustForcex + dragx + gravx
+        forcey = thrustForcey + dragy + gravy
         
-        forcex = 0
-        forcey = upwards - abs(drag) - abs(gravy)
-        
-        return (forcex, forcey), (dragx, dragy), (gravx, gravy)
+        return (forcex, forcey), (dragx, dragy,dragAngle), (gravx, gravy,gravAngle),(velx,vely,velocity_angle)
