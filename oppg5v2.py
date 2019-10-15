@@ -8,17 +8,16 @@ import ploter
 import numpy as np
 import math
 
-
 earth = Earth()
 rocket = SaturnV()
-starting_state = (1e-5, earth.equator_radius,  0.1,1)
+starting_state = (1e-5, earth.equator_radius, 0.1,1)
 state = RocketState(rocket, earth, starting_state, stepsize=1)
 
 
 def doRungeKuttaRivertz():
     dimension = 5
     h = 1 / 4
-    tol = 5e-20
+    tol = 5e-30
     tEnd = 1000
     function=state.mar_delta_state
 
@@ -34,35 +33,48 @@ def doRungeKuttaRivertz():
 def doPlots(data=False,animation=False,vectors=False):
     xs = [x[0] for x in state.stateLog]
 
-    altitude = [(x[2] - earth.equator_radius) for x in [y for y in state.stateLog]]
+    altitude = [(math.sqrt(x[2]**2 + x[1]**2) - earth.equator_radius) for x in [y for y in state.stateLog]]
+    atmo_alt = [x for x in range(0, earth.upper_stratosphere[1] + 10000)]
+    atmo_density = [earth.atmosphere_density(altitude) for altitude in atmo_alt]
+    atmo_temp = [earth.__airtemp__(altitude) for altitude in atmo_alt]
+    atmo_pressure = [earth.__pressure__(altitude) for altitude in atmo_alt]
     xpos = [(x[1] ) for x in [y for y in state.stateLog]]
     ypos = [(x[2] ) for x in [y for y in state.stateLog]]
-    xvel = [(x[3] ) for x in [y for y in state.stateLog]]
-    yvel = [(x[4] ) for x in [y for y in state.stateLog]]
-    dragy = [x for x in [y[1] for y in state.drags]]
-    dragx = [x for x in [y[0] for y in state.drags]]
-    gravy = [x for x in [y[1] for y in state.gravities]]
-    gravx = [x for x in [y[0] for y in state.gravities]]
-    forcesy = [x for x in [y[1] for y in state.forces]]
-    forcesx = [x for x in [y[0] for y in state.forces]]
+    vel = [(math.sqrt(x[3]**2 + x[4]**2)) for x in [y for y in state.stateLog]]
+    
+    drag = [(math.sqrt(x[1]**2 + x[0]**2)) for x in [y for y in state.drags]]
+    grav = [math.sqrt(y[1]**2 + y[0]**2) for y in state.gravities]
+    forces = [math.sqrt(y[1]**2 + y[0]**2) for y in state.forces]
     thrusts = [rocket.current_force(y) for y in xs]
 
 
     if data:
-        ploter.plots([(xs, thrusts,"Thrust"),(xs, dragx,"Drag x"), (xs, dragy,"Drag y"), (xs, gravx,"Grav x"),(xs, gravy,"Grav y"), (xs, yvel,"yvel"),(xs, xvel,"xvel"),(xs, ypos,"ypos"), (xs, xpos,"xpos"), (xs, state.masses,"Mass")], rocket)
+        ploter.plots([
+            #(xs, thrusts,"Thrust"),
+            (xs, drag,"Drag"), 
+            (xs, grav,"Grav"),
+            (xs, vel, "vel"),
+            (xs, forces, "forces"),
+            (xs, altitude, 'Altitude')],
+            #(atmo_alt, atmo_density, 'Atmo density for given altitude (x-axis)'),
+            #(atmo_alt, atmo_pressure, 'Atmo pressure'),
+            #(atmo_alt, atmo_temp, 'Atmo temp')],
+            #(xs, state.masses,"Mass")], 
+            rocket)
     if animation:
         ploter.movie(xs,earth,xpos,ypos)
     if vectors:
-
         gravAngels=([x[2] for x in state.gravities],'b','grav angle')
         dragAngels=([x[2] for x in state.drags],'r','drag angle')
         velocity=([x[2] for x in state.velocities],'y','velocity angle')
+        thrustAngles = ([x[2] for x in state.forces], 'g', 'thrust angle')
 
         ploter.plotVector(xs,
                           [
                             gravAngels,
                            dragAngels,
-                           velocity
+                           velocity,
+                           thrustAngles
                            ])
     ploter.show()
 

@@ -26,7 +26,7 @@ class RocketState:
         self.mycurrent_state = self.mystart_state
         self.stateLog=[self.mystart_state]
         self.time_increments = [0]
-        self.forces = [(0, 0)]
+        self.forces = [(0, 0, 0)]
         self.masses = [rocket.total_loaded_mass]
         self.thrusts = [0]
         self.thrustAngles = [0]
@@ -67,7 +67,9 @@ class RocketState:
         self.drags.append(drag_force)
         self.gravities.append(grav_force)
         self.thrusts.append(self.rocket.current_force(time))
+
         self.stateLog.append(next_state)
+        
         self.velocities.append(velocity)
 
 
@@ -75,19 +77,19 @@ class RocketState:
     def mar_delta_state(self, current_state): # Returns change in time from last step, and change in position and velocity with this timestep [x, y, xvel, yvel]
         time, previous_xpos, previous_ypos, previous_xvel, previous_yvel = current_state # last element in list
         # Find the sum of all forces working on the rocket at this time
-        (working_force), (drag_force), (grav_force),(velocity) = self.rocket.total_working_force(time, self.planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel)
-
+        #(working_force), (drag_force), (grav_force),(velocity) = self.rocket.total_working_force(time, self.planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel)
+        (forcex, forcey, thrustAngle), (dragx, dragy,dragAngle), (gravx, gravy,gravAngle),(velx,vely,velocity_angle) = self.rocket.total_working_force(time, self.planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel)
         
         current_mass = self.rocket.current_mass(time)
         
-        delta_xvel = working_force[0] / current_mass
-        delta_yvel = working_force[1] / current_mass
+        delta_xvel = forcex / current_mass
+        delta_yvel = forcey / current_mass
 
         delta_state=[1,previous_xvel,previous_yvel,delta_xvel,delta_yvel]
         next_state= current_state+delta_state
         
 
-        self.loggState(working_force,time,drag_force,grav_force,next_state,velocity)
+        self.loggState((forcex, forcey, thrustAngle),time,(dragx, dragy, dragAngle), (gravx, gravy, gravAngle),next_state,(velx, vely, velocity_angle))
 
         return delta_state
 

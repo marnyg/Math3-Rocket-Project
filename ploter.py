@@ -3,6 +3,7 @@ from matplotlib import animation, rc
 import math
 import numpy as np
 
+frame_interval = 1
 
 def show():
     plt.show()
@@ -14,7 +15,7 @@ def find_nearest(array, value):
 
 def movie(xs,earth,xpos,ypos):
     fig = plt.figure()
-    ax = plt.axes(xlim=(-max(xpos), max(xpos)), ylim=(-max(ypos), max(ypos)))
+    ax = plt.axes(xlim=(-max(ypos), max(ypos)), ylim=(-max(ypos), max(ypos)))
     line, = ax.plot([], [], 'o-y', lw=2)
     line2, = ax.plot([], [], '_-b', lw=2)
     line3, = ax.plot([], [], '_-b', lw=2)
@@ -22,6 +23,8 @@ def movie(xs,earth,xpos,ypos):
     altitude_text = ax.text(0.02, 0.90, '', transform=ax.transAxes)
     x_text = ax.text(0.02, 0.85, '', transform=ax.transAxes)
     y_text = ax.text(0.02, 0.80, '', transform=ax.transAxes)
+    circle3 = plt.Circle((0,0), earth.equator_radius, color='g', clip_on=False)
+    ax.add_artist(circle3)
 
     # initialization function: plot the background of each frame
     def init():
@@ -55,7 +58,9 @@ def movie(xs,earth,xpos,ypos):
     quad_speed = normal_speed / 4
     octa_speed = normal_speed / 8
 
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=math.floor(max(xs)), interval=.1, blit=True)
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=math.floor(max(xs)), interval=frame_interval, blit=True)
+
+    #anim.save('rocketboi.mp4', fps=166, extra_args=['-vcodec', 'libx264'])
 
 
 def showGuides(col,data,rocket,points=False,lines=False):
@@ -106,7 +111,7 @@ def plotVector(xs,listsOfAnges):
         for j,l in zip(range(len(listsOfAnges)), listsOfAnges):
             sp.text(0.02, 0.90-j*0.05, l[2],color=l[1], transform=sp.transAxes)
             arrow=sp.arrow(0,0,l[0][indexOfFrame],0.8, linewidth=2,color=l[1])
-    anim = animation.FuncAnimation(fig, update,frames=len(listsOfAnges[0][0]),interval=0.01, blit=False)
+    anim = animation.FuncAnimation(fig, update,frames=len(listsOfAnges[0][0]),interval=frame_interval, blit=False)
 
     fig.add_subplot(sp)
     plt.show()

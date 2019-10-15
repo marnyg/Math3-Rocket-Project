@@ -109,21 +109,19 @@ class SaturnV:
             return 6.6 * math.pi
 
     def current_angle_to_origin(self,previous_xpos,previous_ypos):
-        if previous_xpos == 0:
-            return  3 * math.pi / 2
-        else: 
-            return  math.atan(previous_ypos / previous_xpos)
+        return math.atan2(previous_ypos, previous_xpos)
 
     def current_velocity_angle(self,previous_xvel, previous_yvel):
-        if previous_xvel == 0:
-            return 3 * math.pi / 2
-        else: 
-            return math.atan2(previous_yvel, previous_xvel)
+        return math.atan2(previous_yvel, previous_xvel)
 
     def decomposeVector(self, vector, angle):
-        x = vector * math.sin(angle)
-        y = vector * math.cos(angle)
+        x = vector * math.cos(angle)
+        y = vector * math.sin(angle)
         return x,y
+
+    def thrust_angle(self, time, xvel, yvel):
+        #return 6 * math.pi / 8
+        return math.pi / 4
 
     def total_working_force(self, time, planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel):
 
@@ -149,23 +147,25 @@ class SaturnV:
         velocity = math.sqrt(previous_xvel**2 + previous_yvel**2)
         velx,vely=self.decomposeVector(velocity, velocity_angle)
 
-        dragAngle=velocity_angle+math.pi
+        dragAngle = velocity_angle+math.pi
         drag = self.current_drag(planet, time, distance_to_surface, velocity)
         dragx, dragy = self.decomposeVector(drag, dragAngle)
 
+        thrust_angle = self.thrust_angle(time, previous_xvel, previous_yvel)
+        thrustForcex,thrustForcey = self.decomposeVector(thrustForce, thrust_angle)
 
-        thrustForcex,thrustForcey=self.decomposeVector(thrustForce,velocity_angle)
-
-
-        if math.sin(velocity_angle) == 1:
+        '''
+        if math.sin(velocity_angle) == -1:
             print('rocket going down!')
         if dragy > 0:
             print(time,'Drag is pointing upwards?!?!')
         if gravy > 0:
             print('Gravity is pointing upwards?!?!')
-
-       
+        '''
+        #print('Forex:', thrustForcex)
+        #print('dragx:', dragx)
+        #print('gravx:', gravx)
         forcex = thrustForcex + dragx + gravx
         forcey = thrustForcey + dragy + gravy
         
-        return (forcex, forcey), (dragx, dragy,dragAngle), (gravx, gravy,gravAngle),(velx,vely,velocity_angle)
+        return (forcex, forcey, thrust_angle), (dragx, dragy,dragAngle), (gravx, gravy,gravAngle),(velx,vely,velocity_angle)
