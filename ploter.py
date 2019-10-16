@@ -3,6 +3,7 @@ from matplotlib import animation, rc
 import math
 import numpy as np
 
+
 frame_interval = 1
 
 def show():
@@ -15,7 +16,7 @@ def find_nearest(array, value):
 
 def movie(xs,earth,xpos,ypos):
     fig = plt.figure()
-    ax = plt.axes(xlim=(-max(ypos), max(ypos)), ylim=(-max(ypos), max(ypos)))
+    ax = plt.axes(xlim=(2*(-max(ypos)), 2*max(ypos)), ylim=(2*(-max(ypos)), 2*max(ypos)))
     line, = ax.plot([], [], 'o-y', lw=2)
     line2, = ax.plot([], [], '_-b', lw=2)
     line3, = ax.plot([], [], '_-b', lw=2)
@@ -25,6 +26,14 @@ def movie(xs,earth,xpos,ypos):
     y_text = ax.text(0.02, 0.80, '', transform=ax.transAxes)
     circle3 = plt.Circle((0,0), earth.equator_radius, color='g', clip_on=False)
     ax.add_artist(circle3)
+
+    ax.scatter(xpos,ypos, lw=0.1)
+    #for x,y in  zip(xpos,ypos):
+    #    ax.plot([x,y],[],'0-g',lw=1)
+    #    ax.scatter(x,y)
+
+
+
 
     # initialization function: plot the background of each frame
     def init():
@@ -53,10 +62,6 @@ def movie(xs,earth,xpos,ypos):
         return line, line2, line3,time_text,altitude_text,x_text,y_text,
 
 
-    normal_speed = 10 # ms delay between frames
-    double_speed = normal_speed / 2
-    quad_speed = normal_speed / 4
-    octa_speed = normal_speed / 8
 
     anim = animation.FuncAnimation(fig, animate, init_func=init, frames=math.floor(max(xs)), interval=frame_interval, blit=True)
 

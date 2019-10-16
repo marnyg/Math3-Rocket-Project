@@ -20,7 +20,7 @@ class SaturnV:
         self.stage_3_loaded_mass = 123000 # kg
         self.stage_3_empty_mass = 13500 # kg
         self.stage_3_force = 1033.1 * 1000 # Newton
-        self.stage_3_firing_time = 165 + 335 # seconds, two burns
+        self.stage_3_firing_time = 165 + 335 -100 # seconds, two burns
         self.stage_3_fuel_consumption = (self.stage_3_loaded_mass - self.stage_3_empty_mass) / self.stage_3_firing_time # kg fuel pr. second, delta_m stage 3
 
         self.module_empty_mass = 4280 # kg standard load, 4920 kg extended load
@@ -119,9 +119,15 @@ class SaturnV:
         y = vector * math.sin(angle)
         return x,y
 
-    def thrust_angle(self, time, xvel, yvel):
+    def thrust_angle(self, time, xvel, yvel,angle_to_origin):
+
         #return 6 * math.pi / 8
-        return math.pi / 4
+        if time<13:
+            return 78/360*2*math.pi
+        if time<400:
+            return math.pi / 2
+        else:
+            return angle_to_origin- math.pi/2
 
     def total_working_force(self, time, planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel):
 
@@ -151,7 +157,7 @@ class SaturnV:
         drag = self.current_drag(planet, time, distance_to_surface, velocity)
         dragx, dragy = self.decomposeVector(drag, dragAngle)
 
-        thrust_angle = self.thrust_angle(time, previous_xvel, previous_yvel)
+        thrust_angle = self.thrust_angle(time, previous_xvel, previous_yvel,angle_to_origin)
         thrustForcex,thrustForcey = self.decomposeVector(thrustForce, thrust_angle)
 
         '''

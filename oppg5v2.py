@@ -17,8 +17,8 @@ state = RocketState(rocket, earth, starting_state, stepsize=1)
 def doRungeKuttaRivertz():
     dimension = 5
     h = 1 / 4
-    tol = 5e-30
-    tEnd = 1000
+    tol = 5e-20
+    tEnd = 40000
     function=state.mar_delta_state
 
     rkf = RKF.RungeKuttaFehlberg54(function, dimension, h, tol)
@@ -55,10 +55,10 @@ def doPlots(data=False,animation=False,vectors=False):
             (xs, grav,"Grav"),
             (xs, vel, "vel"),
             (xs, forces, "forces"),
-            (xs, altitude, 'Altitude')],
-            #(atmo_alt, atmo_density, 'Atmo density for given altitude (x-axis)'),
-            #(atmo_alt, atmo_pressure, 'Atmo pressure'),
-            #(atmo_alt, atmo_temp, 'Atmo temp')],
+            (xs, altitude, 'Altitude'),
+            (atmo_alt, atmo_density, 'Atmo density for given altitude (x-axis)'),
+            (atmo_alt, atmo_pressure, 'Atmo pressure'),
+            (atmo_alt, atmo_temp, 'Atmo temp')],
             #(xs, state.masses,"Mass")], 
             rocket)
     if animation:
