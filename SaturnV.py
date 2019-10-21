@@ -1,7 +1,7 @@
 import math
 
 class SaturnV:
-    def __init__(self):
+    def __init__(self,thrust_angle,firingTime=10000):
         # Stage 1 variables
         self.stage_1_loaded_mass = 2290000 # kg
         self.stage_1_empty_mass = 130000 # kg
@@ -20,8 +20,9 @@ class SaturnV:
         self.stage_3_loaded_mass = 123000 # kg
         self.stage_3_empty_mass = 13500 # kg
         self.stage_3_force = 1033.1 * 1000 # Newton
-        self.stage_3_firing_time = 165 + 335 -100 # seconds, two burns
+        self.stage_3_firing_time = 165 + 335 # seconds, two burns
         self.stage_3_fuel_consumption = (self.stage_3_loaded_mass - self.stage_3_empty_mass) / self.stage_3_firing_time # kg fuel pr. second, delta_m stage 3
+        self.firingTime=firingTime
 
         self.module_empty_mass = 4280 # kg standard load, 4920 kg extended load
         self.module_loaded_mass = 15200 # kg standard load, 16400 kg extended load
@@ -31,7 +32,12 @@ class SaturnV:
         self.total_firing_time = self.stage_1_firing_time + self.stage_2_firing_time + self.stage_3_firing_time
         self.drag_coefficient = 0.515
 
+        self.thrust_angle=thrust_angle
+
     def current_force(self, time):
+        if time>self.firingTime:
+            return 0
+
         if time <= self.stage_1_firing_time:
             # stage 1 is firing
             #print('stage 1, time: ' + str(time) + " force: ", self.stage_1_force)
@@ -67,20 +73,18 @@ class SaturnV:
             # stage 1 is firing
             current_stage_time = time # the stage has currently been firing for "current time after 0" - "all previous stages firing time"
             total_current_mass = self.total_loaded_mass - ( self.stage_1_fuel_consumption * current_stage_time )
-            #print('stage 1, time: ' + str(time) + " mass: ", total_current_mass)
             return total_current_mass
         elif time <= self.stage_1_firing_time + self.stage_2_firing_time:
             # stage 2 is firing
             current_stage_time = time - self.stage_1_firing_time # the stage has currently been firing for "current time after 0" - "all previous stages firing time"
             total_current_mass = self.total_loaded_mass - ( self.stage_2_fuel_consumption * current_stage_time ) - self.stage_1_loaded_mass
-            #print('stage 2, time: ' + str(time) + " mass: ", total_current_mass)
             return total_current_mass
         elif time <= self.stage_1_firing_time + self.stage_2_firing_time + self.stage_3_firing_time:
             # stage 3 is firing
             current_stage_time = time - self.stage_1_firing_time - self.stage_2_firing_time # the stage has currently been firing for "current time after 0" - "all previous stages firing time"
+
             total_current_mass = self.total_loaded_mass - ( self.stage_3_fuel_consumption * current_stage_time ) - self.stage_1_loaded_mass - self.stage_2_loaded_mass
-            #print('stage 3, time: ' + str(time) + " mass: ", total_current_mass)
-            return total_current_mass    
+            return total_current_mass
         else: 
             #print('All stages dropped, current mass is only of module')
             return self.module_empty_mass # all stages have been decoupled, only the mass of the landing module remains
@@ -119,15 +123,6 @@ class SaturnV:
         y = vector * math.sin(angle)
         return x,y
 
-    def thrust_angle(self, time, xvel, yvel,angle_to_origin):
-
-        #return 6 * math.pi / 8
-        if time<13:
-            return 78/360*2*math.pi
-        if time<400:
-            return math.pi / 2
-        else:
-            return angle_to_origin- math.pi/2
 
     def total_working_force(self, time, planet, previous_xpos, previous_xvel, previous_ypos, previous_yvel):
 
@@ -141,6 +136,8 @@ class SaturnV:
         # Angle to origin = atan(y/x) = atan (previous_ypos/ previous_xpos)
 
         thrustForce = self.current_force(time)
+        if time>self.firingTime:
+            gravity = planet.gravitational_force(self.current_mass(self.firingTime), distance_to_center)
         
         angle_to_origin = self.current_angle_to_origin(previous_xpos, previous_ypos)
         gravAngle=angle_to_origin+math.pi
@@ -157,20 +154,9 @@ class SaturnV:
         drag = self.current_drag(planet, time, distance_to_surface, velocity)
         dragx, dragy = self.decomposeVector(drag, dragAngle)
 
-        thrust_angle = self.thrust_angle(time, previous_xvel, previous_yvel,angle_to_origin)
+        thrust_angle = self.thrust_angle(self, time,angle_to_origin)
         thrustForcex,thrustForcey = self.decomposeVector(thrustForce, thrust_angle)
 
-        '''
-        if math.sin(velocity_angle) == -1:
-            print('rocket going down!')
-        if dragy > 0:
-            print(time,'Drag is pointing upwards?!?!')
-        if gravy > 0:
-            print('Gravity is pointing upwards?!?!')
-        '''
-        #print('Forex:', thrustForcex)
-        #print('dragx:', dragx)
-        #print('gravx:', gravx)
         forcex = thrustForcex + dragx + gravx
         forcey = thrustForcey + dragy + gravy
         

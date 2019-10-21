@@ -20,15 +20,16 @@ def thrust_angle(self, time,angle_to_origin):
 
 
 earth = Earth()
-rocket = SaturnV(thrust_angle)
+firingTime=850
+rocket = SaturnV(thrust_angle,firingTime)
 starting_state = (1e-5, earth.equator_radius, 0.1,1)
 state = RocketState(rocket, earth, starting_state, stepsize=1)
 
 
 def doRungeKuttaRivertz():
     dimension = 5
-    h = 1 / 4
-    tol = 5e-20
+    h = 1 / 16
+    tol = 5e-23
     tEnd = 10000
     function=state.mar_delta_state
 
@@ -37,7 +38,6 @@ def doRungeKuttaRivertz():
         if (math.floor(state.mycurrent_state[0])%10==0):
             print("Time: %4.0d / %4.0d seconds" % (state.mycurrent_state[0],tEnd))
         state.mycurrent_state, Error = rkf.safeStep(state.mycurrent_state)
-    
     print("Prepering plots")
 
 
