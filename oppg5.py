@@ -24,7 +24,7 @@ def doRungeKuttaRivertz():
     dimension = 5
     h = 1 / 4
     tol = 5e-20
-    tEnd = 6500
+    tEnd =5000
     function=state.mar_delta_state
 
     rkf = RKF.RungeKuttaFehlberg54(function, dimension, h, tol)
