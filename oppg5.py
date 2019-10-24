@@ -15,7 +15,8 @@ def thrust_angle(self, time,angle_to_origin):
 
 
 earth = Earth()
-rocket = SaturnV(thrust_angle)
+firingTime=800
+rocket = SaturnV(thrust_angle,firingTime)
 starting_state = (1e-5, earth.equator_radius, 0.1,1)
 state = RocketState(rocket, earth, starting_state, stepsize=1)
 
